@@ -42,7 +42,7 @@ beforeEach(async () => {
   await teacherTwo.save();
 });
 
-describe("testing user capabilities", () => {
+describe("creating accounts", () => {
   test("a teacher account can be added", async () => {
     const totalUsers = await helper.usersInDb();
     expect(totalUsers).toHaveLength(3);
@@ -54,102 +54,6 @@ describe("testing user capabilities", () => {
     expect(totalUsers).toHaveLength(3);
     expect(totalUsers[1].name).toBe(helper.initialUsers[1].name);
   });
-
-  // test("creation succeeds with a fresh username", async () => {
-  //   const usersAtStart = await helper.usersInDb();
-
-  //   const newUser = {
-  //     username: "mluukkai",
-  //     name: "Matti Luukkainen",
-  //     password: "salainen",
-  //   };
-
-  //   await api
-  //     .post("/api/users")
-  //     .send(newUser)
-  //     .expect(201)
-  //     .expect("Content-Type", /application\/json/);
-
-  //   const usersAtEnd = await helper.usersInDb();
-  //   expect(usersAtEnd).toHaveLength(usersAtStart.length + 1);
-
-  //   const usernames = usersAtEnd.map((u) => u.username);
-  //   expect(usernames).toContain(newUser.username);
-  // });
-
-  // test("creation fails with proper statuscode and message if username already taken", async () => {
-  //   const usersAtStart = await helper.usersInDb();
-
-  //   const newUser = {
-  //     username: "root",
-  //     name: "Superuser",
-  //     password: "salainen",
-  //   };
-
-  //   const result = await api
-  //     .post("/api/users")
-  //     .send(newUser)
-  //     .expect(400)
-  //     .expect("Content-Type", /application\/json/);
-
-  //   expect(result.body.error).toContain("username must be unique");
-
-  //   const usersAtEnd = await helper.usersInDb();
-  //   expect(usersAtEnd).toEqual(usersAtStart);
-  // });
-
-  // test("cannot create user with too short of a username", async () => {
-  //   const newUser = {
-  //     username: "r",
-  //     name: "Superuser",
-  //     password: "salainen",
-  //   };
-
-  //   const result = await api
-  //     .post("/api/users")
-  //     .send(newUser)
-  //     .expect(400)
-  //     .expect("Content-Type", /application\/json/);
-
-  //   expect(result.body.error).toContain("shorter");
-  // });
-
-  // test("cannot create user with too short of a password", async () => {
-  //   const usersAtStart = await helper.usersInDb();
-
-  //   const newUser = {
-  //     username: "ryansdfg",
-  //     name: "Superuser",
-  //     password: "a",
-  //   };
-
-  //   const result = await api
-  //     .post("/api/users")
-  //     .send(newUser)
-  //     .expect(400)
-  //     .expect("Content-Type", /application\/json/);
-
-  //   expect(result.body.error).toContain(
-  //     "password needs to be at least 3 characters long"
-  //   );
-  // });
-
-  // test("cannot create user with no password", async () => {
-  //   const usersAtStart = await helper.usersInDb();
-
-  //   const newUser = {
-  //     name: "Superuser",
-  //     password: "asd",
-  //   };
-
-  //   const result = await api
-  //     .post("/api/users")
-  //     .send(newUser)
-  //     .expect(400)
-  //     .expect("Content-Type", /application\/json/);
-
-  //   expect(result.body.error).toContain("username");
-  // });
 });
 
 describe("testing constraints", () => {
@@ -202,6 +106,8 @@ describe("testing constraints", () => {
       .expect(201)
       .set(teacherHeaders)
       .expect("Content-Type", /application\/json/);
+    const students = await helper.studentsInDB();
+    expect(students).toHaveLength(1);
   });
 
   test("a parent cannot add a student account", async () => {
@@ -217,9 +123,12 @@ describe("testing constraints", () => {
       .set(parentHeaders)
       .expect("Content-Type", /application\/json/);
     expect(result.body.error).toContain("Parent Accounts cannot add students");
+
+    const students = await helper.studentsInDB();
+    expect(students).toHaveLength(0);
   });
 
-  test("an assignment can be created", async () => {
+  test("an assignment can be created and attached to a student", async () => {
     const newStudent = {
       name: "bobby",
       age: 4,
@@ -250,6 +159,43 @@ describe("testing constraints", () => {
       .expect(201)
       .set(teacherHeaders)
       .expect("Content-Type", /application\/json/);
+  });
+
+  test("a parent cannot create an assignment log", async () => {
+    const newStudent = {
+      name: "bobby",
+      age: 4,
+    };
+
+    await api
+      .post("/api/students")
+      .send(newStudent)
+      .expect(201)
+      .set(teacherHeaders)
+      .expect("Content-Type", /application\/json/);
+
+    const students = await helper.studentsInDB();
+    expect(students).toHaveLength(1);
+    const studentID = students[0].id;
+
+    const assignment = {
+      assignmentType: "Academic",
+      assignmentName: "Reading",
+      contentArea: "Reading",
+      grade: "50",
+      student: studentID,
+    };
+
+    const result = await api
+      .post("/api/assignments")
+      .send(assignment)
+      .expect(401)
+      .set(parentHeaders)
+      .expect("Content-Type", /application\/json/);
+
+    expect(result.body.error).toContain(
+      "Parent Accounts cannot add assignment logs"
+    );
   });
 });
 
