@@ -36,6 +36,7 @@ assignmentRouter.post("/", async (request, response) => {
   await studenttoUpdate.save();
   response.status(201).json(savedAssignment);
 });
+
 //GET
 
 //get all assignments

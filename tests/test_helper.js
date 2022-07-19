@@ -1,34 +1,36 @@
-const Weight = require("../models/weight");
+// const WeigStduht = require("../models/weight");
 const User = require("../models/user");
-
-const initialWeight = [{ weight: 200 }, { weight: 150 }];
+const Student = require("../models/student");
 
 const initialUsers = [
   {
-    username: "superuser",
-    name: "root",
-    password: "admin",
+    username: "teacherUser",
+    email: "teacher@gmail.com",
+    name: "teacher",
+    role: "Teacher",
+    password: "teacher",
   },
   {
-    username: "ryan",
-    name: "ryan",
-    password: "ryan",
+    username: "parentUser",
+    email: "parent@gmail.com",
+    name: "parent",
+    role: "Parent",
+    password: "parent",
   },
 ];
-
-const weightInDB = async () => {
-  const weights = await Weight.find({});
-  return weights.map((weight) => weight.toJSON());
-};
 
 const usersInDb = async () => {
   const users = await User.find({});
   return users.map((u) => u.toJSON());
 };
 
+const studentsInDB = async () => {
+  const students = await Student.find({});
+  return students.map((u) => u.toJSON());
+};
+
 module.exports = {
-  initialWeight,
   initialUsers,
-  weightInDB,
   usersInDb,
+  studentsInDB,
 };
